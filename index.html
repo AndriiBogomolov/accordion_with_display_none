@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accordion Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0d1b2a;
+      color: white;
+      padding: 20px;
+    }
+
+    .block {
+      margin-bottom: 10px;
+    }
+
+    button[data-id] {
+        height: 100px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      background: #1b263b;
+      color: white;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    button[data-id].active {
+      background: #415a77;
+    }
+
+    .mobile-popup {
+      background: #1b263b;
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: max-height 0.4s ease, opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .mobile-popup.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .mobile-popup-inner {
+      padding: 15px;
+      line-height: 1.4;
+    }
+
+    .section1,
+    .section2,
+    .section3 {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        height: 300px;
+        border: 2px solid green;
+    }
+
+    /* приховуємо моб-попапи на десктопі */
+    @media screen and (min-width: 768px) {
+      .mobile-popup {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="block">
+    <button data-id="1">Відкрити Попап 1</button>
+    <div class="mobile-popup mob-content1" data-popup="1">
+      <div class="mobile-popup-inner">
+        <p>Це вміст першого попапа. Тут може бути будь-який текст.</p>
+        <p>Ще трохи тексту для висоти.</p>
+        <p>Це вміст першого попапа. Тут може бути будь-який текст.</p>
+        <p>Ще трохи тексту для висоти.</p><p>Це вміст першого попапа. Тут може бути будь-який текст.</p>
+        <p>Ще трохи тексту для висоти.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="block">
+    <button data-id="2">Відкрити Попап 2</button>
+    <div class="mobile-popup mob-content2" data-popup="2">
+      <div class="mobile-popup-inner">
+        <p>Вміст другого попапа. Інший текст.</p>
+        <p>Ще більше тексту, щоб висота була іншою.</p>
+        <p>І ще абзац!</p>
+        <p>Вміст другого попапа. Інший текст.</p>
+        <p>Ще більше тексту, щоб висота була іншою.</p>
+        <p>І ще абзац!</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="block">
+    <button data-id="3">Відкрити Попап 3</button>
+    <div class="mobile-popup mob-content3" data-popup="3">
+      <div class="mobile-popup-inner">
+        <p>Третій попап. Короткий. Третій попап. Короткий.Третій попап. Короткий.Третій попап. Короткий.Третій попап. Короткий.Третій попап. Короткий.Третій попап. Короткий.Третій попап. Короткий.Третій попап. Короткий.</p>
+      </div>
+    </div>
+  </div>
+
+<div class="section1">
+</div>
+<div class="section2">
+</div>
+<div class="section3">
+</div>
+
+  <script>
+    const buttons = document.querySelectorAll('button[data-id]');
+    const popups = document.querySelectorAll('.mobile-popup');
+    let activeId = null;
+
+    buttons.forEach(button => {
+      button.addEventListener('click', function () {
+        const currentId = this.getAttribute('data-id');
+        const isMobile = window.innerWidth <= 767;
+
+        if (!isMobile) return; // для простоти – тільки мобільна логіка
+
+        if (activeId === currentId) {
+          // Закриття
+          const mobileContent = document.querySelector(`.mobile-popup[data-popup="${currentId}"]`);
+          if (mobileContent) {
+            mobileContent.style.maxHeight = mobileContent.scrollHeight + "px";
+            requestAnimationFrame(() => {
+              mobileContent.style.maxHeight = "0px";
+            });
+            const onClose = (e) => {
+              if (e.propertyName === "max-height") {
+                mobileContent.style.display = "none";
+                mobileContent.removeEventListener("transitionend", onClose);
+              }
+            };
+            mobileContent.addEventListener("transitionend", onClose);
+            mobileContent.classList.remove("active");
+            this.classList.remove("active");
+          }
+          activeId = null;
+
+        } else {
+          // Закриваємо всі
+          popups.forEach(el => {
+            if (el.classList.contains("active")) {
+              el.style.maxHeight = el.scrollHeight + "px";
+              requestAnimationFrame(() => {
+                el.style.maxHeight = "0px";
+              });
+              const onClose = (e) => {
+                if (e.propertyName === "max-height") {
+                  el.style.display = "none";
+                  el.removeEventListener("transitionend", onClose);
+                }
+              };
+              el.addEventListener("transitionend", onClose);
+              el.classList.remove("active");
+            }
+          });
+          buttons.forEach(btn => btn.classList.remove('active'));
+
+          // Відкриваємо новий
+          const mobileContent = document.querySelector(`.mobile-popup[data-popup="${currentId}"]`);
+          if (mobileContent) {
+            this.classList.add('active');
+            mobileContent.style.display = "block";
+            mobileContent.classList.add("active");
+
+            mobileContent.style.maxHeight = "0px";
+            mobileContent.offsetHeight; // force reflow
+            mobileContent.style.maxHeight = mobileContent.scrollHeight + "px";
+
+            const onOpen = (e) => {
+              if (e.propertyName === "max-height") {
+                mobileContent.style.maxHeight = "none";
+                mobileContent.removeEventListener("transitionend", onOpen);
+              }
+            };
+            mobileContent.addEventListener("transitionend", onOpen);
+          }
+          activeId = currentId;
+        }
+      });
+    });
+  </script>
+</body>
+</html>
